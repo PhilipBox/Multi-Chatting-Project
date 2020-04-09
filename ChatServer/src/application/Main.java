@@ -3,6 +3,7 @@ package application;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,8 +78,37 @@ public class Main extends Application {
 	}
 
 	// 서버의 작동을 중지시키는 메소드.
+	// stopServer method는 서버 작동 종료 이후에, 전체 자원을 할당해제해주는 메소드.
+	// 잘 만들어진 서버프로그램이라면 stopServer도 작성되어야 한다.
 	public void stopServer() {
-
+		try {
+			// stopServer는 서버를 완전하게 중지를 시키는 것이기 때문에
+			// 모든 클라이언트들에 대한 정보를 끊어준다.
+			
+			// 현재 작동중인 모든 소켓 닫기
+			Iterator<Client> iterator = clients.iterator();
+			// iterator로 하나씩 접근
+			while(iterator.hasNext()) {
+				Client client = iterator.next();
+				// 닫아줌.
+				client.socket.close();
+				// iterator에서도 닫아준 소켓 제거
+				iterator.remove(); 
+			}
+			// 서버 소켓 객체 닫기
+			if(serverSocket != null && !serverSocket.isClosed()) {
+				serverSocket.close();
+			}
+			
+			// 쓰레드 풀 종료하기
+			if(threadPool != null && !threadPool.isShutdown()) {
+				// shutdown으로 자원할당 해제
+				threadPool.shutdown();
+			}
+		} catch (Exception e) {
+			
+			
+		}
 	}
 
 	// UI를 생성하고, 실질적으로 프로그램을 동작시키는 메소드.
