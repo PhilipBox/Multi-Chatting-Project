@@ -9,9 +9,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Font;
 
 public class Main extends Application {
 
@@ -114,7 +119,57 @@ public class Main extends Application {
 	// UI를 생성하고, 실질적으로 프로그램을 동작시키는 메소드.
 	@Override
 	public void start(Stage primaryStage) {
-
+		BorderPane root = new BorderPane();
+		root.setPadding(new Insets(5));
+		
+		TextArea textArea = new TextArea();
+		//text를 출력만하고 채울수는 없도록 (false)
+		textArea.setEditable(false);
+		textArea.setFont(new Font("나눔고딕", 15));
+		// 레이아웃에서 중간 위치
+		root.setCenter(textArea);
+		
+		//서버의 작동을 시작하는데 사용할 버튼 생성
+		Button toggleButton = new Button("시작하기");
+		toggleButton.setMaxWidth(Double.MAX_VALUE);
+		BorderPane.setMargin(toggleButton, new Insets(1,0,0,0));
+		// 레이아웃에서 아래 위치
+		root.setBottom(toggleButton);
+		
+		//자기 자신의 컴퓨터 주소 : local address
+		String IP = "127.0.0.1";
+		int port = 9876;
+		
+		// 버튼 이벤트 처리
+		toggleButton.setOnAction(event -> {
+			if(toggleButton.getText().equals("시작하기")) {
+				startServer(IP, port);
+				// runLater를 써서 GUI요소를 출력할 수 있도록 해야 한다.
+				Platform.runLater(()->{
+					String message = String.format("[서버 시작]\n",IP, port);
+					textArea.appendText(message);
+					toggleButton.setText("종료하기");
+				}); 
+			} else {
+				// 버튼의 상태가 '종료하기' 였으므로 서버를 종료해주고, 버튼 text를 변경해준다.
+				stopServer();
+				Platform.runLater(()->{
+					String message = String.format("[서버 종료]\n",IP, port);
+					textArea.appendText(message);
+					toggleButton.setText("시작하기");
+				}); 
+			}
+		});
+		
+		Scene scene = new Scene(root, 400, 400);
+		primaryStage.setTitle("[채팅 서버]");
+		// 만약 종료버튼을 눌렀다면 stopServer함수를 호출 
+		primaryStage.setOnCloseRequest(event-> stopServer());
+		// 위에서 만든 Scene정보를 화면에 정상적으로 출력할 수 있도록 primaryStage에 Scene정보 설정.
+		primaryStage.setScene(scene);
+		// 화면에 출력
+		primaryStage.show();
+		
 	}
 
 	// 프로그램의 진입점
