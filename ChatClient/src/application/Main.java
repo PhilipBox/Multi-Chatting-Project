@@ -7,10 +7,15 @@ import java.net.Socket;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 
 
 
@@ -124,7 +129,107 @@ public class Main extends Application {
 	// 실제로 프로그램을 동작시키는 메소드
 	@Override
 	public void start(Stage primaryStage) {
+		BorderPane root = new BorderPane();
+		root.setPadding(new Insets(5));
 		
+		// BorderPane위에 하나의 레이아웃을 더 넣어주기 위한 것.
+		HBox hbox = new HBox();
+		// 여백
+		hbox.setSpacing(5);
+		
+		// 사용자 이름이 들어갈 수 있는 텍스트 공간
+		TextField userName = new TextField();
+		userName.setPrefWidth(150); // 너비
+		userName.setPromptText("닉네임을 입력하세요.");
+		// HBox내부에 TextField가 항상 출력되도록.
+		HBox.setHgrow(userName, Priority.ALWAYS);
+		
+		TextField IPText = new TextField("127.0.0.1");
+		TextField portText = new TextField("9876");
+		portText.setPrefWidth(80);
+		
+		
+		// hbox에 3개의 텍스트박스가 추가될 수 있도록.
+		hbox.getChildren().addAll(userName, IPText, portText);
+		
+		// borderPane 상단에 위치 
+		root.setTop(hbox);
+
+		textArea = new TextArea();
+		// 내용을 수정할 수 없도록 설정
+		textArea.setEditable(false);
+		// 레이아웃(borderPane)의 중간에 위치 
+		root.setCenter(textArea);
+		
+		TextField input = new TextField();
+		input.setPrefWidth(Double.MAX_VALUE);
+		input.setDisable(true); // 접속하기 이전에는 어떠한 메시지를 전송할 수 없도록.
+
+		input.setOnAction(event ->{
+			// 서버로 어떠한 메시지를 전달할 수 있도록.
+			send(userName.getText() + ": " + input.getText() +"\n");
+			input.setText(""); // 전송했으니까 전송칸 비우기
+			input.requestFocus(); // 다시 어떠한 메시지를 전송할 수 있도록 포커싱을 설정
+		});
+		
+		Button sendButton = new Button("보내기");
+		sendButton.setDisable(true); // 접속하기 이전에는 이용할 수 없도록 설정 
+		
+		// 버튼을 누르는 이벤트가 발생했을 때 전송될 수 있도록 
+		sendButton.setOnAction(event ->{
+			send(userName.getText() +": " + input.getText() + "\n");
+			input.setText("");
+			input.requestFocus();
+		});
+		
+		Button connectionButton = new Button("접속하기");
+		connectionButton.setOnAction(event ->{
+			// 버튼이 현재 "접속하기"인 것을 클릭했다면 
+			if(connectionButton.getText().equals("접속하기")) {
+				int port = 9876; // 포트번호 기본 설정
+				try {
+					// 포트번호 입력칸에 들어있는 텍스트 내용을 정수형태로 변환해서 다시 담을 수 있도록 한다.
+					// 사용자가 직접 포트번호를 설정도 할 수 있도록.
+					port = Integer.parseInt(portText.getText());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				// 특정한 IP주소에 어떠한 port번호로 접속할 수 있도록.
+				startClient(IPText.getText() , port);
+				// runLater 함수로 실질적으로 화면에 관련된 내용이 출력될 수 있도록.
+				Platform.runLater(() -> {
+					textArea.appendText("[채팅방 접속]\n");
+				});
+				connectionButton.setText("종료하기"); // 버튼명 변경
+				input.setDisable(false); // 버튼을 조작할 수 있도록 false로 처리 
+				sendButton.setDisable(false); 
+		 		input.requestFocus(); // 바로 입력할 수 있도록 포커싱 
+			} else {
+				// 접속하기 버튼이 아니라 종료하기 버튼이었다면
+				stopClient();
+				Platform.runLater(()->{
+					textArea.setText("[ 채팅방 퇴장 ]\n");
+				});
+				connectionButton.setText("접속하기");
+				input.setDisable(true);
+				sendButton.setDisable(true);
+			}
+		});
+		
+		//위에서 설정한 내용을 넣을 공간 생성
+		BorderPane pane = new BorderPane();
+		pane.setLeft(connectionButton);
+		pane.setCenter(input);
+		pane.setRight(sendButton);
+		
+		root.setBottom(pane);
+		Scene scene = new Scene(root, 600, 600);
+		primaryStage.setTitle("[ 채팅 클라이언트 ]");
+		primaryStage.setScene(scene); // scene등록 
+		primaryStage.setOnCloseRequest(event -> stopClient()); // 화면닫기 버튼을 누르면 stopClient 수행 후 종료.
+		primaryStage.show();
+		
+		connectionButton.requestFocus();		
 	}
 	
 	// 프로그램의 진입접입니다.
