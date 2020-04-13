@@ -18,3 +18,9 @@
 - Multi-Client를 위한 Multi-Thread 구현.
 - 안전한 Thread 사용을 위한, 스레드 풀(Thread Pool)기법 사용.
 - 간단한 채팅 GUI 디자인.
+
+### 프로젝트 실행 화면
+#### Server 실행 및 종료 
+![ChatServer](https://github.com/PhilipBox/Multi-Chatting-Project/blob/develop/ChatServer/server.png)
+#### Client 접속 및 대화/종료
+![ClientServer](https://github.com/PhilipBox/Multi-Chatting-Project/blob/develop/ChatClient/client.png)
